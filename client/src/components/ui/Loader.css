@@ -1,0 +1,63 @@
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: 20px;
+  position: relative;
+}
+
+.loader-star-ring {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  animation: spin 4s linear infinite;
+}
+
+.loader-star {
+  position: absolute;
+  color: var(--accent);
+  font-size: 14px;
+  opacity: 0.6;
+  top: 50%;
+  left: 50%;
+  transform-origin: -40px 0;
+  transform: rotate(calc(var(--i) * 45deg)) translateX(-40px);
+}
+
+.loader-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* offset for the ring */
+  margin-top: -20px;
+}
+
+.loader-big-star {
+  font-size: 32px;
+  color: var(--accent);
+  animation: pulse 1.5s ease-in-out infinite;
+  display: block;
+  line-height: 1;
+}
+
+.loader-message {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--text-secondary);
+  text-align: center;
+  animation: fadeIn 0.5s ease;
+  max-width: 300px;
+  line-height: 1.4;
+}
+
+.loader-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}

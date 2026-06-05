@@ -1,0 +1,235 @@
+.capsule-page {
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* ── Error state ─────────────────────────────────────────────────── */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 48px;
+  color: var(--accent-muted);
+}
+
+.error-state h2 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--text-primary);
+}
+
+.error-state p {
+  color: var(--text-secondary);
+  max-width: 400px;
+}
+
+/* ── Masthead ─────────────────────────────────────────────────────── */
+.capsule-masthead {
+  position: relative;
+  background: var(--bg-secondary);
+  border-bottom: var(--border-strong);
+  padding: 120px 0 60px;
+  overflow: hidden;
+  margin-bottom: 48px;
+}
+
+.masthead-noise {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(196, 105, 138, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(201, 168, 76, 0.06) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+/* Decorative large text background */
+.capsule-masthead::before {
+  content: attr(data-year);
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: 400px;
+  font-weight: 900;
+  color: var(--accent);
+  opacity: 0.02;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.masthead-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.masthead-top {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.masthead-name {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 12px !important;
+}
+
+.serif-italic {
+  font-family: var(--font-serif);
+  font-style: italic;
+}
+
+.masthead-title {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 32px;
+}
+
+.masthead-born {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.masthead-date-big {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.masthead-date-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.date-day {
+  font-family: var(--font-display);
+  font-size: clamp(60px, 10vw, 120px);
+  font-weight: 900;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.date-sep {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 40px;
+  color: var(--accent-muted);
+}
+
+.date-month {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6vw, 80px);
+  font-weight: 900;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.date-year {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6vw, 80px);
+  font-weight: 300;
+  color: var(--text-secondary);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.masthead-bottom {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.masthead-moon-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.moon-emoji {
+  font-size: 24px;
+}
+
+.moon-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.masthead-population {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted) !important;
+}
+
+.masthead-population strong {
+  color: var(--gold);
+}
+
+/* ── Two-column layout ───────────────────────────────────────────── */
+.capsule-grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 32px;
+  align-items: start;
+}
+
+.capsule-col-main {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.capsule-col-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 80px;
+}
+
+.holidays-card {
+  padding: 20px;
+}
+
+@media (max-width: 960px) {
+  .capsule-grid {
+    grid-template-columns: 1fr;
+  }
+  .capsule-col-side {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .capsule-col-side {
+    grid-template-columns: 1fr;
+  }
+  .masthead-date-line {
+    gap: 4px;
+  }
+}
