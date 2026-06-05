@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'https://born-on-this-day.onrender.com/api',
   timeout: 30000,
 });
 
