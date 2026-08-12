@@ -1,16 +1,48 @@
 .footer {
   background: var(--bg-secondary);
   border-top: var(--border);
-  padding: 48px 0 32px;
-  margin-top: 80px;
-  text-align: center;
+  padding: 56px 0 0;
+  margin-top: 64px;
+  overflow: visible;
+  position: relative;
 }
 
+/* Pulled out of normal flow and centered exactly on the footer's top edge
+   (the boundary between the grid-patterned body above and this footer's
+   beige background) so the scallops physically straddle the transition —
+   top half over the section above, bottom half over the footer — instead
+   of floating inside the beige area with a gap above them. */
+.footer-scallop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  margin: 0;
+  z-index: 1;
+}
+
+/* Compact two-column masthead-style row: brand/tagline left, credits +
+   back-to-top right — replaces the old single centered stack so the footer
+   reads as a designed closing block rather than an afterthought. */
 .footer-inner {
   display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+  padding-bottom: 28px;
+  border-bottom: var(--border);
+}
+
+.footer-col {
+  display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  gap: 8px;
+}
+
+.footer-col-right {
+  align-items: flex-end;
+  text-align: right;
 }
 
 .footer-brand {
@@ -37,11 +69,63 @@
   font-style: italic;
   font-size: 13px;
   color: var(--text-muted);
-  max-width: 400px;
+  max-width: 320px;
 }
 
 .footer-meta {
+  font-family: var(--font-mono);
   font-size: 10px;
+  line-height: 1.7;
   color: var(--text-muted);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
+}
+
+.footer-top-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.footer-top-btn:hover {
+  opacity: 0.7;
+}
+
+@media (max-width: 600px) {
+  .footer-inner {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .footer-col-right {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .footer-copy {
+    max-width: 100%;
+  }
+}
+
+/* Decorative closing wordmark — compact rather than the full-bleed giant
+   text it used to be, so it reads as a signature, not dead space. */
+.footer-mega-wrap {
+  text-align: center;
+  overflow: hidden;
+}
+
+.footer-mega {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(48px, 11vw, 110px);
+  line-height: 0.85;
+  color: var(--accent-muted);
+  letter-spacing: -0.02em;
+  margin-top: 20px;
+  padding-bottom: 4px;
+  user-select: none;
 }

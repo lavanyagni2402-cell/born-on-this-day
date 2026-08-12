@@ -19,9 +19,43 @@
   justify-content: center;
 }
 
+/* Graceful "no data for this date" state — used by sections whose API can
+   legitimately return nothing (Games, Birthdays) instead of removing the
+   section entirely. Reuses the standard .card treatment (same border,
+   radius, shadow, background as every other card) so it reads as part of
+   the page rather than an error state, and stays compact — no oversized
+   blank area. */
+.section-empty-card {
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.section-empty-text {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* ── Card-topper: heading OUTSIDE the box, content INSIDE ────────────────
+   Shared structural pattern for every section that renders as a single
+   boxed card (sidebar stats, Music, Weather/Stocks/Currency/Earthquakes,
+   NASA, Share). The heading sits above the card as its own line, then the
+   card follows below with clear space — no overlap, no negative margins.
+   Sections that instead show a heading above a *grid* of many small
+   item-cards (News, Movies, Books, etc.) don't need this — there's no
+   single enclosing box trapping their heading in the first place. */
+.card-topper {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-topper > .section-label {
+  margin: 0 0 16px 2px;
+}
+
 /* ── Moon card ──────────────────────────────────────────────────────── */
 .moon-card {
-  text-align: center;
   padding: 24px;
 }
 
@@ -36,7 +70,7 @@
 .moon-big-emoji {
   font-size: 52px;
   line-height: 1;
-  filter: drop-shadow(0 0 12px rgba(196, 105, 138, 0.4));
+  filter: drop-shadow(0 0 12px rgba(var(--accent-rgb), 0.4));
 }
 
 .moon-info {
@@ -53,8 +87,8 @@
 
 .moon-illumination-bar {
   height: 4px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 2px;
+  background: rgba(var(--accent-rgb), 0.15);
+  border-radius: var(--radius-sm);
   overflow: hidden;
   margin-bottom: 4px;
 }
@@ -62,7 +96,7 @@
 .moon-illumination-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent), var(--gold));
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   transition: width 1s ease;
 }
 
@@ -101,7 +135,7 @@
 }
 
 .news-card:hover {
-  border-color: rgba(196, 105, 138, 0.3);
+  border-color: var(--border-hover);
   transform: translateY(-2px);
 }
 
@@ -128,7 +162,7 @@
 .news-image-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(196, 105, 138, 0.15) 0%, transparent 60%);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.15) 0%, transparent 60%);
 }
 
 .news-content {
@@ -150,7 +184,7 @@
   color: var(--accent);
   background: var(--accent-glow);
   padding: 2px 6px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 
 .news-num {
@@ -185,15 +219,20 @@
 
 /* ── Music ──────────────────────────────────────────────────────────── */
 .music-card {
-  padding: 28px;
+  padding: 24px;
 }
 
+/* Matches the site-wide pink-heading / black-subheading pattern: the
+   .section-label above this is now the big pink heading, so .music-heading
+   plays the small black subheading role, same as .section-title elsewhere. */
 .music-heading {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 900;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
   color: var(--text-primary);
-  margin: 8px 0 12px;
+  line-height: 1.3;
+  margin: 0 0 16px;
 }
 
 .music-note {
@@ -212,12 +251,12 @@
   color: var(--gold);
   border: 1px solid var(--gold-muted);
   padding: 3px 8px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   margin-bottom: 20px;
 }
 
 .music-number1 {
-  background: linear-gradient(135deg, rgba(196, 105, 138, 0.1), rgba(201, 168, 76, 0.05));
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), rgba(var(--gold-rgb), 0.08));
   border: var(--border-strong);
   border-radius: var(--radius-lg);
   padding: 20px;
@@ -225,6 +264,18 @@
   align-items: center;
   gap: 16px;
   margin-bottom: 20px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.music-number1:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.music-number1:hover .number1-title {
+  color: var(--accent);
 }
 
 .number1-badge {
@@ -284,10 +335,21 @@
   gap: 12px;
   padding: 8px 0;
   border-bottom: var(--border);
+  text-decoration: none;
+  cursor: pointer;
+  transition: gap 0.2s;
 }
 
 .top5-row:last-child {
   border-bottom: none;
+}
+
+.top5-row:hover {
+  gap: 16px;
+}
+
+.top5-row:hover .top5-song {
+  color: var(--accent);
 }
 
 .top5-num {
@@ -308,9 +370,12 @@
 }
 
 /* ── Movies ─────────────────────────────────────────────────────────── */
+/* auto-fit (not auto-fill) so however many cards exist stretch to cover
+   the full row width — restores the original larger poster size while
+   still never leaving a dead gap when a row doesn't divide evenly. */
 .movies-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
 }
 
@@ -323,11 +388,12 @@
 }
 
 .movie-card:hover {
-  border-color: rgba(196, 105, 138, 0.3);
+  border-color: var(--border-hover);
   transform: translateY(-3px);
 }
 
 .movie-poster-wrapper {
+  position: relative;
   width: 100%;
   aspect-ratio: 2/3;
   overflow: hidden;
@@ -346,14 +412,31 @@
 }
 
 .movie-poster-placeholder {
+  position: relative;
   width: 100%;
   aspect-ratio: 2/3;
-  background: var(--bg-surface);
+  background: linear-gradient(150deg, var(--accent-muted) 0%, var(--bg-surface) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
-  color: var(--accent-muted);
+  overflow: hidden;
+}
+
+.movie-poster-initial {
+  font-family: var(--font-display);
+  font-size: 72px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.movie-poster-icon {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  font-size: 20px;
+  opacity: 0.55;
 }
 
 .movie-info {
@@ -367,6 +450,10 @@
   color: var(--text-primary);
   margin-bottom: 6px;
   line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .movie-rating {
@@ -383,6 +470,10 @@
   color: var(--text-muted);
   line-height: 1.5;
   margin-bottom: 8px !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .movie-year {
@@ -392,7 +483,7 @@
   color: var(--accent-muted);
   background: var(--accent-glow);
   padding: 2px 6px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* ── Birthdays ──────────────────────────────────────────────────────── */
@@ -413,7 +504,7 @@
 }
 
 .birthday-card:hover {
-  border-color: rgba(196, 105, 138, 0.3);
+  border-color: var(--border-hover);
   transform: translateY(-3px);
 }
 
@@ -509,14 +600,14 @@
   line-height: 1;
   background: var(--accent-glow);
   padding: 4px 6px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 
 .timeline-line {
   width: 1px;
   flex: 1;
-  background: rgba(196, 105, 138, 0.15);
+  background: rgba(var(--accent-rgb), 0.15);
   margin-top: 6px;
 }
 
@@ -531,7 +622,7 @@
   width: 60px;
   height: 60px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: var(--radius);
   flex-shrink: 0;
   filter: grayscale(20%);
 }
@@ -554,8 +645,13 @@
 
 /* ── Population ─────────────────────────────────────────────────────── */
 .population-card {
-  text-align: center;
   padding: 24px;
+}
+
+.population-number,
+.population-label,
+.population-context {
+  text-align: center;
 }
 
 .population-number {
@@ -635,26 +731,10 @@
 /* ── Share section ──────────────────────────────────────────────────── */
 .share-section {
   background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
-  border: var(--border-strong);
   border-radius: var(--radius-lg);
   padding: 48px;
-  margin: 48px 0 0;
   position: relative;
   overflow: hidden;
-}
-
-.share-section::before {
-  content: '★ SHARE ★';
-  position: absolute;
-  right: -10px;
-  top: -10px;
-  font-family: var(--font-display);
-  font-size: 80px;
-  font-weight: 900;
-  color: var(--accent);
-  opacity: 0.04;
-  white-space: nowrap;
-  pointer-events: none;
 }
 
 .share-inner {
@@ -777,4 +857,461 @@
 .news-readmore:hover {
   color: var(--accent-light);
   transform: translateX(4px);
+}
+
+/* ── Weather ────────────────────────────────────────────────────────── */
+.weather-card {
+  padding: 24px;
+}
+
+.weather-location,
+.weather-temp-row,
+.weather-stats {
+  text-align: center;
+}
+
+.weather-location {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--text-primary);
+  margin: 0 0 4px !important;
+}
+
+.weather-temp-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  margin: 10px 0 16px;
+}
+
+.weather-temp-main {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.weather-temp-unit {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
+.weather-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  border-top: var(--border);
+  padding-top: 14px;
+}
+
+.weather-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weather-stat-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.weather-stat-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+/* ── Stocks ─────────────────────────────────────────────────────────── */
+.stock-card {
+  padding: 24px;
+}
+
+.stock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 10px;
+}
+
+.stock-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: var(--border);
+}
+
+.stock-row:last-child {
+  border-bottom: none;
+}
+
+.stock-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.stock-close {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.stock-date {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  width: 100%;
+  text-align: right;
+}
+
+.stock-note {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 14px !important;
+}
+
+/* ── Photos from the era (masonry) ─────────────────────────────────── */
+.photos-grid {
+  columns: 3;
+  column-gap: 16px;
+}
+
+.photo-item {
+  display: block;
+  position: relative;
+  break-inside: avoid;
+  margin-bottom: 16px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: var(--border);
+}
+
+.photo-item-image {
+  width: 100%;
+  display: block;
+  transition: transform 0.4s;
+}
+
+.photo-item:hover .photo-item-image {
+  transform: scale(1.04);
+}
+
+.photo-credit {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Social share buttons ──────────────────────────────────────────── */
+.share-social-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.share-social-btn {
+  flex: 1;
+  text-align: center;
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: var(--border);
+  border-radius: var(--radius-md, 8px);
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.share-social-btn:hover {
+  border-color: var(--border-hover);
+  color: var(--accent);
+  transform: translateY(-2px);
+}
+
+/* ── NASA video thumbnail ──────────────────────────────────────────── */
+.nasa-video-thumb-wrapper {
+  position: relative;
+  display: block;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.nasa-video-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.nasa-video-thumb-wrapper:hover .nasa-video-play {
+  transform: translate(-50%, -50%) scale(1.1);
+  background: var(--accent);
+}
+
+/* ── The Internet as It Looked (Wayback) ──────────────────────────────── */
+.wayback-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.wayback-card {
+  background: var(--bg-card);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.wayback-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-3px);
+}
+
+.wayback-site-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.wayback-date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.wayback-cta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-top: 6px;
+}
+
+/* ── Science of Your Birth Year ───────────────────────────────────────── */
+.science-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.science-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 0;
+  border-bottom: var(--border);
+  text-decoration: none;
+  transition: gap 0.2s;
+}
+
+.science-row:last-child {
+  border-bottom: none;
+}
+
+.science-row:hover {
+  gap: 20px;
+}
+
+.science-row:hover .science-title {
+  color: var(--accent);
+}
+
+.science-num {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--accent-muted);
+  width: 28px;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+
+.science-info {
+  flex: 1;
+}
+
+.science-title {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: 6px !important;
+  transition: color 0.2s;
+}
+
+.science-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.science-field {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-glow);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.science-cited {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* ── Earth Events (earthquakes) ───────────────────────────────────────── */
+.earthquake-card {
+  padding: 24px;
+}
+
+.earthquake-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.earthquake-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: var(--border);
+  text-decoration: none;
+  transition: gap 0.2s;
+}
+
+.earthquake-row:last-child {
+  border-bottom: none;
+}
+
+.earthquake-row:hover {
+  gap: 14px;
+}
+
+.earthquake-mag {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.earthquake-place {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* ── Currency Snapshot ─────────────────────────────────────────────────── */
+.currency-card {
+  padding: 24px;
+}
+
+.currency-sub {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--text-primary);
+  margin: 0 0 14px !important;
+}
+
+.currency-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.currency-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: var(--border);
+}
+
+.currency-row:last-child {
+  border-bottom: none;
+}
+
+.currency-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.currency-value {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+@media (max-width: 900px) {
+  .photos-grid {
+    columns: 2;
+  }
+  .wayback-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .weather-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .photos-grid {
+    columns: 1;
+  }
+  .wayback-grid {
+    grid-template-columns: 1fr;
+  }
+  .share-social-row {
+    flex-wrap: wrap;
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import './HomePage.css';
@@ -8,6 +8,17 @@ function HomePage() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const formCardRef = useRef(null);
+
+  const handleFormCardMouseMove = (e) => {
+    const card = formCardRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    card.style.setProperty('--glow-x', `${x}%`);
+    card.style.setProperty('--glow-y', `${y}%`);
+  };
 
   const today = new Date().toISOString().split('T')[0];
   const minDate = '1900-01-01';
@@ -31,7 +42,7 @@ function HomePage() {
     // Store name in sessionStorage for use on capsule page
     if (name) sessionStorage.setItem('capsuleName', name);
 
-    navigate(`/capsule/${date}`);
+    navigate(`/story/${date}`);
   };
 
   return (
@@ -89,7 +100,7 @@ function HomePage() {
                 </div>
                 <div className="stat-divider">★</div>
                 <div className="stat-item">
-                  <span className="stat-number">8</span>
+                  <span className="stat-number">14</span>
                   <span className="stat-label">data sources</span>
                 </div>
                 <div className="stat-divider">★</div>
@@ -102,7 +113,7 @@ function HomePage() {
 
             {/* Right — date picker card */}
             <div className="hero-form-wrapper">
-              <div className="form-card">
+              <div className="form-card" ref={formCardRef} onMouseMove={handleFormCardMouseMove}>
                 <div className="form-card-header">
                   <span className="form-card-star">★</span>
                   <span className="form-card-title">open your capsule</span>
@@ -164,27 +175,22 @@ function HomePage() {
                   </div>
                 </div>
               </div>
-
-              {/* Decorative cutout text */}
-              <div className="hero-cutout">
-                <span>step into</span>
-                <span className="cutout-big">the past</span>
-              </div>
             </div>
           </div>
         </section>
+
+        <div className="scallop-divider" aria-hidden="true"></div>
 
         {/* Feature grid */}
         <section className="features container">
           <div className="features-header">
             <div className="section-label">what's inside</div>
-            <h2 className="section-title">Your capsule includes</h2>
+            <h2 className="section-title"></h2>
           </div>
 
           <div className="features-grid">
             {FEATURES.map((f, i) => (
               <div key={i} className="feature-card" style={{ animationDelay: `${i * 0.08}s` }}>
-                <span className="feature-icon">{f.icon}</span>
                 <h3 className="feature-name">{f.name}</h3>
                 <p className="feature-desc">{f.desc}</p>
               </div>
@@ -200,9 +206,21 @@ const FEATURES = [
   { icon: '📰', name: 'News Headlines', desc: 'Major stories from that exact day — politics, culture, science' },
   { icon: '🎵', name: 'Music Charts', desc: 'The #1 song and top hits from your birth week' },
   { icon: '🎬', name: 'Movies in Theaters', desc: 'What was playing on the big screen that month' },
+  { icon: '📺', name: 'TV Shows', desc: 'Popular shows airing around your birth year' },
+  { icon: '📖', name: 'Books Released', desc: 'Notable books published that year' },
+  { icon: '🎮', name: 'Trending Games', desc: 'Games that were popular around that time' },
   { icon: '🌕', name: 'Moon Phase', desc: 'The exact lunar phase the night you were born' },
   { icon: '👥', name: 'World Population', desc: 'How many people shared the planet with you' },
   { icon: '💻', name: 'Tech Era', desc: 'The technology and gadgets defining the moment' },
+  { icon: '🌤️', name: 'Weather Snapshot', desc: 'The exact temperature, rainfall and wind for that day' },
+  { icon: '📈', name: 'Stock Markets', desc: 'Where the Dow, NASDAQ and S&P 500 closed that day' },
+  { icon: '💱', name: 'Currency Snapshot', desc: 'What $1 USD was worth in EUR, GBP, INR and JPY' },
+  { icon: '🌋', name: 'Earth Events', desc: 'Notable earthquakes recorded around the world that day' },
+  { icon: '🚀', name: 'NASA Picture of the Day', desc: 'The astronomy image NASA featured that day' },
+  { icon: '🛰️', name: 'Space Missions', desc: 'Rockets and launches happening around that day' },
+  { icon: '🔬', name: 'Science Highlights', desc: 'The most-cited research published that year' },
+  { icon: '🕸️', name: 'The Internet as It Looked', desc: 'Wayback Machine snapshots of major sites from that era' },
+  { icon: '📷', name: 'Photos From the Era', desc: 'A visual look back at the period you were born' },
   { icon: '🎂', name: 'Famous Birthdays', desc: 'Notable people who share your exact birth date' },
   { icon: '📅', name: 'Historical Events', desc: 'Pivotal moments from history on this day' },
   { icon: '🔗', name: 'Share Your Capsule', desc: 'Get a unique link to share with friends & family' },

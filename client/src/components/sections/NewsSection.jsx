@@ -6,7 +6,6 @@ function NewsSection({ news, year }) {
     <div className="section-block">
       <div className="section-label">headlines</div>
       <h2 className="section-title">The News on Your Birthday</h2>
-      <p className="section-sub">What the world was reading the exact day you were born</p>
 
       <div className="news-grid">
         {news.map((article, i) => (

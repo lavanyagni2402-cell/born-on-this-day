@@ -5,8 +5,7 @@ function MoviesSection({ movies, year }) {
   return (
     <div className="section-block">
       <div className="section-label">at the cinema</div>
-      <h2 className="section-title">Movies in Theaters</h2>
-      <p className="section-sub">What was on the big screen around {year}</p>
+      <h2 className="section-title">Movies in Theaters — {year}</h2>
 
       <div className="movies-grid">
         {movies.map((movie, i) => (
@@ -14,17 +13,18 @@ function MoviesSection({ movies, year }) {
             {movie.poster ? (
               <div className="movie-poster-wrapper">
                 <img src={movie.poster} alt={movie.title} className="movie-poster" onError={e => e.target.parentElement.style.display='none'} />
+                {movie.rating && movie.rating !== 'N/A' && (
+                  <span className="card-sticker">★ {movie.rating}</span>
+                )}
               </div>
             ) : (
               <div className="movie-poster-placeholder">
-                <span>🎬</span>
+                <span className="movie-poster-initial">{movie.title?.[0] || '🎬'}</span>
+                <span className="movie-poster-icon">🎬</span>
               </div>
             )}
             <div className="movie-info">
               <h4 className="movie-title">{movie.title}</h4>
-              {movie.rating && movie.rating !== 'N/A' && (
-                <span className="movie-rating">★ {movie.rating}</span>
-              )}
               <p className="movie-overview">{movie.overview}</p>
               {movie.releaseDate && (
                 <span className="movie-year">{movie.releaseDate.slice(0, 4)}</span>

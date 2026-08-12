@@ -2,42 +2,66 @@
 /* Aesthetic: Editorial dark, mixed-media collage, bold typography, star motifs */
 
 :root {
-  /* Core palette — dark with dusty mauve accents */
-  --bg-primary: #0a0608;
-  --bg-secondary: #110d10;
-  --bg-card: #1a1219;
-  --bg-card-hover: #221820;
-  --bg-surface: #150e14;
+  /* ── DARK MODE — "night edition of the same publication" ────────────────
+     Warm ink + charcoal paper, dusty rose/wine accents, muted gold, cream
+     type. Deliberately NOT an inverted light theme — same brand DNA
+     (merlot / seafoam / pink-panther / chartreuse family), tuned for a
+     dark, low-contrast, editorial night mode rather than a flipped palette. */
+  --bg-primary: #1b1114;
+  --bg-secondary: #221419;
+  --bg-card: #2a1820;
+  --bg-card-hover: #33202a;
+  --bg-surface: #241519;
 
-  /* Accent — dusty mauve / rose (from the image) */
-  --accent: #c4698a;
-  --accent-light: #d4849f;
-  --accent-muted: #8a4060;
-  --accent-glow: rgba(196, 105, 138, 0.15);
+  /* Accent — dusty rose (a lightened, dark-mode-legible relative of the
+     "dusty merlot" brand wine used as the light-mode primary accent) */
+  --accent: #c98aa0;
+  --accent-light: #dba3b6;
+  --accent-muted: #8a5468;
+  --accent-secondary: #9c6b85;
+  --accent-soft: rgba(201, 138, 160, 0.12);
+  --accent-rgb: 201, 138, 160;
+  --gold-rgb: 203, 184, 74;
+  --accent-glow: rgba(201, 138, 160, 0.16);
+  --accent-glow-strong: rgba(201, 138, 160, 0.4);
+  --border-hover: rgba(201, 138, 160, 0.4);
 
-  /* Secondary accent — vintage gold */
-  --gold: #c9a84c;
-  --gold-muted: #8a6e2a;
+  /* Muted sage — secondary decorative accent used sparingly (nature/earth
+     leaning content) so not every section leans on pink alone */
+  --seafoam: #8fae7c;
+
+  /* Fixed light text for full-bleed story/gradient cards — stays readable
+     regardless of light/dark theme, since the gradients themselves don't change. */
+  --story-text: #fff9f4;
+
+  /* Secondary accent — vintage gold / chartreuse family */
+  --gold: #cbb84a;
+  --gold-muted: #8f7f34;
 
   /* Text */
-  --text-primary: #f0e8ed;
-  --text-secondary: #a89098;
-  --text-muted: #6a5060;
-  --text-inverse: #0a0608;
+  --text-primary: #f2e6da;
+  --text-secondary: #b39a95;
+  --text-muted: #7d6461;
+  --text-inverse: #1b1114;
 
   /* Typography */
-  --font-display: 'Unbounded', sans-serif;
-  --font-serif: 'Playfair Display', serif;
+  --font-display: 'Fraunces', serif;
+  --font-serif: 'Fraunces', serif;
   --font-mono: 'Space Mono', monospace;
 
-  /* Spacing */
-  --radius: 2px;
-  --radius-md: 4px;
-  --radius-lg: 8px;
+  /* Radius scale — micro badges / small tags / standard cards / featured cards */
+  --radius-sm: 2px;
+  --radius: 6px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
+
+  /* Shadows — extremely subtle, editorial rather than "SaaS elevation" */
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.32);
 
   /* Borders */
-  --border: 1px solid rgba(196, 105, 138, 0.15);
-  --border-strong: 1px solid rgba(196, 105, 138, 0.35);
+  --border: 1px solid rgba(201, 138, 160, 0.16);
+  --border-strong: 1px solid rgba(201, 138, 160, 0.34);
 }
 
 *, *::before, *::after {
@@ -51,13 +75,25 @@ html {
 }
 
 body {
-  background-color: var(--bg-primary);
+  background:
+    linear-gradient(rgba(var(--accent-rgb), 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb), 0.07) 1px, transparent 1px),
+    var(--bg-primary);
+  background-size: 46px 46px;
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: 14px;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+[data-theme="light"] body {
+  background:
+    linear-gradient(rgba(var(--accent-rgb), 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb), 0.12) 1px, transparent 1px),
+    radial-gradient(circle at top, var(--bg-card), var(--bg-primary));
+  background-size: 46px 46px;
 }
 
 /* Noise texture overlay on body */
@@ -70,12 +106,16 @@ body::before {
   z-index: 9999;
   opacity: 0.4;
 }
+[data-theme="light"] body::before{
+    opacity:.08;
+}
 
 /* ── Typography ──────────────────────────────────────────────────────── */
 h1, h2, h3 {
   font-family: var(--font-display);
+  font-weight: 800;
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 h4, h5, h6 {
@@ -98,6 +138,21 @@ a {
 
 a:hover {
   color: var(--accent-light);
+}
+
+/* ── Site-wide cursor glow ───────────────────────────────────────────── */
+.cursor-glow {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    circle 420px at var(--cursor-x, 50vw) var(--cursor-y, 25vh),
+    var(--accent-glow-strong) 0%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  opacity: 0.6;
 }
 
 /* ── Scrollbar ───────────────────────────────────────────────────────── */
@@ -144,12 +199,36 @@ a:hover {
   border: var(--border);
   border-radius: var(--radius-lg);
   padding: 24px;
-  transition: border-color 0.3s, background 0.3s;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.25s, background 0.25s, box-shadow 0.25s, transform 0.25s;
 }
 
 .card:hover {
-  border-color: rgba(196, 105, 138, 0.3);
+  border-color: var(--border-hover);
   background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Card sticker (rotated corner badge) ────────────────────────────── */
+.card-sticker {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--accent);
+  color: var(--text-inverse);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 4px 9px;
+  border-radius: 999px;
+  transform: rotate(-8deg);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  z-index: 2;
+  pointer-events: none;
 }
 
 /* ── Animations ──────────────────────────────────────────────────────── */
@@ -196,29 +275,36 @@ a:hover {
 }
 
 /* ── Section title style ─────────────────────────────────────────────── */
+/* .section-label is now the main heading (big, pink); .section-title is a
+   small black subheading beneath it. Kept the original class names so every
+   section component works unchanged — only the visual weight flipped. */
 .section-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 4vw, 38px);
+  font-weight: 900;
   color: var(--accent);
+  text-transform: capitalize;
+  letter-spacing: normal;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: 10px;
+  line-height: 1.1;
+  margin-bottom: 4px;
 }
 
 .section-label::before {
   content: '★';
-  font-size: 8px;
+  font-size: 0.4em;
 }
 
 .section-title {
-  font-family: var(--font-display);
-  font-size: clamp(24px, 4vw, 40px);
-  font-weight: 900;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
   color: var(--text-primary);
-  line-height: 1.05;
+  line-height: 1.3;
+  margin: 0 0 24px;
 }
 
 /* ── Grid layouts ────────────────────────────────────────────────────── */
@@ -254,7 +340,7 @@ a:hover {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 12px 24px;
-  border-radius: var(--radius);
+  border-radius: 999px;
   border: none;
   cursor: pointer;
   transition: all 0.2s;
@@ -291,6 +377,21 @@ a:hover {
   margin: 32px 0;
 }
 
+/* ── Scallop divider (garland-style decorative edge) ────────────────── */
+.scallop-divider {
+  width: 100%;
+  height: 18px;
+  color: var(--accent);
+  background-image: radial-gradient(circle at 9px 9px, currentColor 9px, transparent 9.5px);
+  background-size: 18px 18px;
+  background-repeat: repeat-x;
+  background-position: top center;
+}
+
+.scallop-divider--flip {
+  transform: rotate(180deg);
+}
+
 /* ── Quote style (handwritten feel) ─────────────────────────────────── */
 .pull-quote {
   font-family: var(--font-serif);
@@ -301,3 +402,94 @@ a:hover {
   padding-left: 20px;
   margin: 24px 0;
 }
+
+/* =========================
+   LIGHT THEME — editorial paper + dusty merlot
+   Palette source: warm white / dusty merlot / pink panther / seafoam /
+   chartreuse. Multiple coordinated warm-paper tones rather than a flat
+   white + one pink, per the reference moodboard.
+========================= */
+
+[data-theme="light"] {
+
+  --bg-primary: #FBF7E8;
+  --bg-secondary: #F3EBD8;
+  --bg-card: #FFFDF6;
+  --bg-card-hover: #FFFAEF;
+  --bg-surface: #FFF9EE;
+
+  /* Dusty merlot, lightened just enough off the raw #62202F swatch to stay
+     legible as body-scale accent text/links while still reading as "wine". */
+  --accent: #7A2A42;
+  --accent-light: #9C4863;
+  --accent-muted: #C98CA0;
+  --accent-secondary: #B65C74;
+  --accent-soft: #F5D0C6;
+  --accent-rgb: 122, 42, 66;
+  --gold-rgb: 166, 148, 28;
+  --accent-glow: rgba(122, 42, 66, 0.08);
+  --accent-glow-strong: rgba(122, 42, 66, 0.22);
+  --border-hover: rgba(122, 42, 66, 0.32);
+
+  /* Sage — secondary decorative accent, deepened slightly off the raw
+     #C9DAA8 swatch for contrast against the cream background. */
+  --seafoam: #A9C48C;
+
+  /* Chartreuse, darkened off the raw #BFAD0E swatch for AA contrast on cream. */
+  --gold: #A6941C;
+  --gold-muted: #8C7D22;
+
+  --text-primary: #271319;
+  --text-secondary: #6B5459;
+  --text-muted: #9C8A8C;
+  --text-inverse: #FBF7E8;
+
+  --border: 1px solid rgba(122, 42, 66, 0.14);
+  --border-strong: 1px solid rgba(122, 42, 66, 0.3);
+
+  --shadow-sm: 0 2px 10px rgba(98, 32, 47, 0.06);
+  --shadow-md: 0 10px 26px rgba(98, 32, 47, 0.09);
+
+}
+
+/* ===========================
+   LIGHT MODE CARDS
+=========================== */
+
+[data-theme="light"] .card {
+  background: var(--bg-card);
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* ===========================
+   LIGHT MODE BUTTONS
+=========================== */
+
+[data-theme="light"] .btn-primary {
+  background: var(--accent);
+  color: var(--text-inverse);
+}
+
+[data-theme="light"] .btn-primary:hover {
+  background: var(--accent-light);
+}
+
+[data-theme="light"] .btn-outline {
+  color: var(--accent);
+  border: 1px solid var(--border-hover);
+  background: var(--bg-card);
+}
+
+[data-theme="light"] .btn-outline:hover {
+  background: var(--accent);
+  color: var(--text-inverse);
+}
+

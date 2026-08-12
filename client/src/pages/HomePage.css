@@ -25,18 +25,6 @@
   z-index: 1;
 }
 
-/* Decorative grid lines */
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(196, 105, 138, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(196, 105, 138, 0.04) 1px, transparent 1px);
-  background-size: 60px 60px;
-  pointer-events: none;
-}
-
 .hero-inner {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -135,6 +123,8 @@
 }
 
 .form-card {
+  --glow-x: 80%;
+  --glow-y: 10%;
   background: var(--bg-card);
   border: var(--border-strong);
   border-radius: var(--radius-lg);
@@ -152,14 +142,25 @@
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, var(--accent), transparent);
+  z-index: 1;
 }
 
+/* Soft pink blur blob that follows the cursor */
 .form-card::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at top right, var(--accent-glow) 0%, transparent 60%);
+  background: radial-gradient(circle 260px at var(--glow-x) var(--glow-y), var(--accent-glow-strong) 0%, transparent 70%);
+  filter: blur(20px);
+  transition: background-position 0.05s linear;
   pointer-events: none;
+}
+
+.form-card-header,
+.date-form,
+.form-examples {
+  position: relative;
+  z-index: 2;
 }
 
 .form-card-header {
@@ -204,7 +205,7 @@
 
 .form-input {
   background: var(--bg-secondary);
-  border: 1px solid rgba(196, 105, 138, 0.2);
+  border: 1px solid var(--border-hover);
   border-radius: var(--radius-md);
   padding: 12px 16px;
   color: var(--text-primary);
@@ -226,6 +227,10 @@
 
 /* Date input specific */
 .date-input {
+  color-scheme: light;
+}
+
+[data-theme="dark"] .date-input {
   color-scheme: dark;
 }
 
@@ -272,9 +277,9 @@
 
 .example-btn {
   background: transparent;
-  border: 1px solid rgba(196, 105, 138, 0.2);
-  border-radius: var(--radius);
-  padding: 5px 10px;
+  border: 1px solid var(--border-hover);
+  border-radius: 999px;
+  padding: 5px 12px;
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--accent);
@@ -288,38 +293,17 @@
   border-color: var(--accent);
 }
 
-.hero-cutout {
-  position: absolute;
-  bottom: -40px;
-  right: -20px;
-  text-align: right;
-  opacity: 0.07;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.hero-cutout span {
-  display: block;
-  font-family: var(--font-display);
-  font-weight: 900;
-  color: var(--accent);
-  text-transform: uppercase;
-  line-height: 1;
-}
-
-.hero-cutout span:first-child {
-  font-size: 16px;
-  letter-spacing: 0.3em;
-}
-
-.cutout-big {
-  font-size: 64px;
-  letter-spacing: -0.04em;
-}
-
 /* ── Features grid ──────────────────────────────────────────────────── */
-.features {
-  padding: 80px 24px 60px;
+/* Selector combines both classes (.container.features) — the element
+   renders as <section className="features container">, and .container's
+   own `padding: 0 24px` shorthand has the same specificity as a bare
+   `.features` rule, so whichever stylesheet happened to load second was
+   winning the padding-top tie (silently zeroing out the space above
+   "What's Inside"). Matching both classes bumps specificity so this rule
+   always wins regardless of CSS load order — same fix as the capsule
+   page's .container.capsule-grid collision. */
+.container.features {
+  padding: 96px 24px 60px;
   position: relative;
   z-index: 1;
 }
@@ -345,24 +329,18 @@
 }
 
 .feature-card:hover {
-  border-color: rgba(196, 105, 138, 0.3);
+  border-color: var(--border-hover);
   background: var(--bg-card-hover);
   transform: translateY(-2px);
 }
 
-.feature-icon {
-  font-size: 28px;
-  display: block;
-  margin-bottom: 12px;
-}
-
 .feature-name {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--accent);
   margin-bottom: 8px;
 }
 

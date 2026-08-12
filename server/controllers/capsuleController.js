@@ -1,6 +1,17 @@
 const axios = require('axios');
 const cache = require('../utils/cache');
 const { getMoonPhase, getWorldPopulation, getTechEra } = require('../utils/calculations');
+const { getTVShows } = require('../utils/tvShows');
+const { getBooks } = require('../utils/books');
+const { getGames } = require('../utils/games');
+const { getWeather } = require('../utils/weather');
+const { getStockSnapshot } = require('../utils/stocks');
+const { getEraPhotos } = require('../utils/photos');
+const { getWaybackSnapshots } = require('../utils/wayback');
+const { getEarthquakes } = require('../utils/earthquakes');
+const { getScienceHighlights } = require('../utils/science');
+const { getCurrencySnapshot } = require('../utils/currency');
+const { getSpaceMissions } = require('../utils/spaceMissions');
 
 // ─── Wikipedia "On This Day" ────────────────────────────────────────────────
 async function getWikipediaEvents(month, day) {
@@ -58,9 +69,22 @@ async function getFamousBirthdays(month, day) {
   try {
     const url = `https://en.wikipedia.org/api/rest_v1/feed/onthisday/births/${month}/${day}`;
     const res = await axios.get(url, { timeout: 8000 });
-    
+
+    // TEMP DEBUG — remove once confirmed working on your machine. Shows
+    // exactly how many births Wikipedia returned before/after filtering,
+    // so a genuinely empty upstream response is distinguishable from a
+    // filtering bug.
+    console.log(`[famousBirthdays ${month}/${day}] raw births from Wikipedia: ${res.data.births?.length ?? 'undefined'}`);
+
+    // Only require a linked Wikipedia page (for a name/url) — NOT a
+    // thumbnail. Wikipedia's onthisday births feed frequently has entries
+    // whose lead page has no thumbnail at all, and requiring one here was
+    // silently emptying the whole list for many dates even though there
+    // were perfectly good births to show. The frontend already renders a
+    // placeholder when `thumbnail` is null, so there's nothing to gain by
+    // filtering these out before they ever reach it.
     const births = (res.data.births || [])
-      .filter(b => b.pages && b.pages.length > 0 && b.pages[0].thumbnail)
+      .filter(b => b.pages && b.pages.length > 0)
       .slice(0, 12)
       .map(b => ({
         year: b.year,
@@ -70,37 +94,59 @@ async function getFamousBirthdays(month, day) {
         url: b.pages[0]?.content_urls?.desktop?.page || null
       }));
 
+    // TEMP DEBUG — remove once confirmed working.
+    console.log(`[famousBirthdays ${month}/${day}] after filtering (has a linked page): ${births.length}`);
+
     cache.set(cacheKey, births);
     return births;
   } catch (err) {
-    console.error('Famous birthdays error:', err.message);
+    // TEMP DEBUG — logs the full error, not just the message, so a
+    // network/DNS/timeout failure is distinguishable from an HTTP error
+    // response (e.g. Wikipedia returning 404/429).
+    console.error(`[famousBirthdays ${month}/${day}] request failed:`, err.response?.status, err.response?.statusText || err.message);
     return [];
   }
 }
 
 // ─── Movies from TMDB ────────────────────────────────────────────────────────
 async function getMovies(year, month, day) {
-  const cacheKey = `movies_${year}_${month}`;
+  // Cache key must include the day — the release window below depends on it,
+  // not just the month.
+  const cacheKey = `movies_${year}_${month}_${day}`;
   const cached = cache.get(cacheKey);
   if (cached) return cached;
 
   try {
-    // Get movies released around that time (±30 days)
-    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const startDate = new Date(year, month - 1, Math.max(1, day - 30));
-    const endDate = new Date(year, month - 1, Math.min(28, day + 30));
-    
-    const start = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
-    const end = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+    // Get movies released within ~2 weeks of the actual birth date.
+    // Using Date's own day-rollover (instead of clamping into the same
+    // month) so this correctly crosses month/year boundaries.
+    const centerDate = new Date(Date.UTC(year, month - 1, day));
+    const startDate = new Date(centerDate);
+    startDate.setUTCDate(startDate.getUTCDate() - 14);
+    const endDate = new Date(centerDate);
+    endDate.setUTCDate(endDate.getUTCDate() + 14);
+
+    const toISODate = (d) => d.toISOString().split('T')[0];
+    const start = toISODate(startDate);
+    const end = toISODate(endDate);
 
     if (!process.env.TMDB_API_KEY || process.env.TMDB_API_KEY === 'your_tmdb_key_here') {
       return getFallbackMovies(year);
     }
 
-    const url = `https://api.themoviedb.org/3/discover/movie?api_key=${process.env.TMDB_API_KEY}&primary_release_date.gte=${start}&primary_release_date.lte=${end}&sort_by=popularity.desc&language=en-US`;
-    const res = await axios.get(url, { timeout: 8000 });
-    
-    const movies = (res.data.results || []).slice(0, 6).map(m => ({
+    const baseUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${process.env.TMDB_API_KEY}&primary_release_date.gte=${start}&primary_release_date.lte=${end}&sort_by=popularity.desc&language=en-US`;
+
+    // Prefer movies with a meaningful number of votes so we don't surface
+    // barely-listed placeholder entries — fall back to the unfiltered
+    // results if the quality filter leaves nothing in this window.
+    let res = await axios.get(`${baseUrl}&vote_count.gte=20`, { timeout: 8000 });
+    let results = res.data.results || [];
+    if (results.length === 0) {
+      res = await axios.get(baseUrl, { timeout: 8000 });
+      results = res.data.results || [];
+    }
+
+    const movies = results.slice(0, 3).map(m => ({
       title: m.title,
       overview: m.overview?.slice(0, 150) + '...',
       poster: m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : null,
@@ -108,6 +154,10 @@ async function getMovies(year, month, day) {
       rating: m.vote_average?.toFixed(1),
       genres: []
     }));
+
+    if (movies.length === 0) {
+      return getFallbackMovies(year);
+    }
 
     cache.set(cacheKey, movies);
     return movies;
@@ -148,12 +198,25 @@ function getFallbackMovies(year) {
   }));
 }
 
-// ─── News Headlines (NewsAPI has data back to ~2016) ──────────────────────────
+// Best-effort "source name" from a URL when the API doesn't give us a
+// human-readable outlet name directly (World News API's search results
+// don't include one).
+function sourceFromUrl(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return null;
+  }
+}
+
+// ─── News Headlines (World News API — covers roughly 2022 onward) ─────────────
 async function getNewsHeadlines(date) {
   const year = date.getFullYear();
-  
-  // NewsAPI only has data back to about 2016
-  if (year < 2016 || !process.env.NEWS_API_KEY || process.env.NEWS_API_KEY === 'your_newsapi_key_here') {
+  const apiKey = process.env.WORLD_NEWS_API_KEY;
+
+  // World News API's archive starts around 2022; older birth dates (and a
+  // missing/placeholder key) fall back to the curated dataset below.
+  if (year < 2022 || !apiKey || apiKey.includes('your_')) {
     return getHistoricalHeadlines(year);
   }
 
@@ -163,25 +226,36 @@ async function getNewsHeadlines(date) {
 
   try {
     const dateStr = date.toISOString().split('T')[0];
-    const nextDay = new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
-    const nextStr = nextDay.toISOString().split('T')[0];
 
-    const url = `https://newsapi.org/v2/everything?from=${dateStr}&to=${nextStr}&sortBy=popularity&language=en&pageSize=6&apiKey=${process.env.NEWS_API_KEY}`;
-    const res = await axios.get(url, { timeout: 8000 });
+    const res = await axios.get('https://api.worldnewsapi.com/search-news', {
+      params: {
+        language: 'en',
+        'earliest-publish-date': `${dateStr} 00:00:00`,
+        'latest-publish-date': `${dateStr} 23:59:59`,
+        sort: 'publish-time',
+        'sort-direction': 'DESC',
+        number: 6,
+      },
+      headers: { 'x-api-key': apiKey },
+      timeout: 8000,
+    });
 
-    const headlines = (res.data.articles || []).slice(0, 6).map(a => ({
+    const headlines = (res.data.news || []).slice(0, 6).map(a => ({
       title: a.title,
-      description: a.description?.slice(0, 120),
-      source: a.source?.name,
+      description: a.summary?.slice(0, 120) || a.text?.slice(0, 120),
+      source: sourceFromUrl(a.url),
       url: a.url,
-      image: a.urlToImage
+      image: a.image,
     }));
+
+    if (headlines.length === 0) {
+      return getHistoricalHeadlines(year);
+    }
 
     cache.set(cacheKey, headlines);
     return headlines;
   } catch (err) {
-    console.error('NewsAPI error:', err.message);
+    console.error('World News API (search-news) error:', err.message);
     return getHistoricalHeadlines(year);
   }
 }
@@ -203,7 +277,14 @@ function getHistoricalHeadlines(year) {
     2010: ['Haiti earthquake kills 230,000', 'BP Deepwater Horizon oil spill', 'Instagram launches'],
     2012: ['Hurricane Sandy devastates New York', 'Syrian Civil War escalates', 'SpaceX becomes first private company to reach ISS'],
     2016: ['Donald Trump elected U.S. President', 'Brexit vote shocks Europe', 'Death of Prince, David Bowie, and Muhammad Ali'],
+    2018: ['Winter Olympics held in Pyeongchang', 'Royal wedding of Prince Harry and Meghan Markle', 'Facebook–Cambridge Analytica data scandal breaks'],
+    2019: ['Notre-Dame Cathedral damaged by fire', 'First-ever image of a black hole released', 'Greta Thunberg leads global climate strikes'],
     2020: ['COVID-19 declared global pandemic', 'George Floyd protests worldwide', 'U.S. Presidential election: Biden defeats Trump'],
+    2021: ['U.S. Capitol riot on January 6', 'COVID-19 vaccine rollout begins worldwide', 'Container ship Ever Given blocks the Suez Canal'],
+    2022: ['Russia launches full-scale invasion of Ukraine', 'Queen Elizabeth II dies after 70 years on the throne', 'Elon Musk completes acquisition of Twitter'],
+    2023: ['Turkey–Syria earthquake kills tens of thousands', 'ChatGPT sparks a global AI boom', 'Silicon Valley Bank collapses in largest bank failure since 2008'],
+    2024: ['Donald Trump wins second term as U.S. President', 'Paris hosts the Summer Olympics', 'Total solar eclipse crosses North America'],
+    2025: ['Donald Trump inaugurated for second presidential term', 'Pope Francis dies, conclave elects his successor', 'Israel strikes Iranian nuclear and military facilities'],
   };
 
   // Find nearest year
@@ -274,30 +355,134 @@ function getMusicByEra(year, month) {
     note: Math.abs(nearest - year) > 1 ? `Approx. charts from ${nearest}` : null
   };
 }
+// ─── NASA Astronomy Picture of the Day ───────────────────────────────
+async function getNASAImage(date) {
+  if (
+    !process.env.NASA_API_KEY ||
+    process.env.NASA_API_KEY === "your_nasa_api_key_here"
+  ) {
+    return null;
+  }
+
+  const cacheKey = `nasa_${date.toISOString().split("T")[0]}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const dateStr = date.toISOString().split("T")[0];
+
+    const url =
+      `https://api.nasa.gov/planetary/apod?date=${dateStr}&api_key=${process.env.NASA_API_KEY}`;
+
+    const res = await axios.get(url, { timeout: 8000 });
+
+  // NASA's own APOD archive page for this date, e.g. apod.nasa.gov/apod/ap240115.html
+  const apodPageId = dateStr.slice(2, 4) + dateStr.slice(5, 7) + dateStr.slice(8, 10);
+
+  const data = {
+  title: res.data.title,
+  explanation: res.data.explanation,
+  image: res.data.url,
+  thumbnail: res.data.thumbnail_url || null,
+  hdImage: res.data.hdurl || null,
+  copyright: res.data.copyright || "NASA",
+  mediaType: res.data.media_type,
+  link: `https://apod.nasa.gov/apod/ap${apodPageId}.html`
+};
+
+    cache.set(cacheKey, data);
+
+    return data;
+  } catch (err) {
+    if (err.response) {
+      console.error(
+        `NASA API error: ${err.response.status} ${err.response.statusText} —`,
+        err.response.data
+      );
+    } else {
+      console.error("NASA API error:", err.message);
+    }
+    return null;
+  }
+}
 
 // ─── Main Aggregator ──────────────────────────────────────────────────────────
-async function getCapsuleData(birthDate) {
+async function getCapsuleData(birthDate, coords = {}) {
   const date = new Date(birthDate + 'T12:00:00Z');
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth() + 1;
   const day = date.getUTCDate();
+  const dateStr = date.toISOString().split('T')[0];
 
-  const cacheKey = `capsule_${birthDate}`;
+  const { lat, lon } = coords;
+  // Weather is the only piece that depends on location, so fold it into the
+  // cache key — otherwise a second visitor with different coordinates would
+  // silently get back the first visitor's cached weather for this date.
+  const cacheKey = `capsule_${birthDate}_${lat ?? 'default'}_${lon ?? 'default'}`;
   const cached = cache.get(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    // getNASAImage() never caches a failure (rate limit, transient network
+    // error, etc.) — only successes. But the capsule as a whole is cached
+    // for 24h, so without this a single bad NASA call would leave the
+    // capsule permanently missing its NASA card for a full day even after
+    // the underlying issue clears. Retry it on every cache hit where it's
+    // still missing; this is cheap since a real failure returns fast.
+    if (!cached.nasa) {
+      const retried = await getNASAImage(date);
+      if (retried) {
+        cached.nasa = retried;
+        cache.set(cacheKey, cached);
+      }
+    }
+    return cached;
+  }
 
   // Fire all requests in parallel
-  const [wikiData, famousBirthdays, movies, news, music] = await Promise.allSettled([
+  const [
+    wikiData,
+    famousBirthdays,
+    movies,
+    news,
+    music,
+    nasa,
+    tvShows,
+    books,
+    games,
+    weather,
+    stocks,
+    photos,
+    wayback,
+    earthquakes,
+    science,
+    currency,
+    spaceMissions,
+] = await Promise.allSettled([
     getWikipediaEvents(month, day),
     getFamousBirthdays(month, day),
     getMovies(year, month, day),
     getNewsHeadlines(date),
     getMusicCharts(year, month),
+    getNASAImage(date),
+    getTVShows(year),
+    getBooks(year),
+    getGames(year),
+    getWeather(dateStr, lat, lon),
+    getStockSnapshot(dateStr),
+    getEraPhotos(year),
+    getWaybackSnapshots(dateStr),
+    getEarthquakes(dateStr),
+    getScienceHighlights(year),
+    getCurrencySnapshot(dateStr),
+    getSpaceMissions(dateStr),
   ]);
 
   const moonPhase = getMoonPhase(date);
   const population = getWorldPopulation(year);
   const techEra = getTechEra(year);
+
+  // Every new integration follows the same rule as the existing ones:
+  // a rejected/failed promise becomes null or [] here, never a crash.
+  const settle = (r, fallback) => (r.status === 'fulfilled' ? r.value : fallback);
 
   const result = {
     date: {
@@ -311,11 +496,23 @@ async function getCapsuleData(birthDate) {
     moon: moonPhase,
     population: population,
     techEra: techEra,
-    wikipedia: wikiData.status === 'fulfilled' ? wikiData.value : { events: [], births: [], deaths: [], holidays: [] },
-    famousBirthdays: famousBirthdays.status === 'fulfilled' ? famousBirthdays.value : [],
-    movies: movies.status === 'fulfilled' ? movies.value : [],
-    news: news.status === 'fulfilled' ? news.value : [],
-    music: music.status === 'fulfilled' ? music.value : {},
+    wikipedia: settle(wikiData, { events: [], births: [], deaths: [], holidays: [] }),
+    famousBirthdays: settle(famousBirthdays, []),
+    movies: settle(movies, []),
+    news: settle(news, []),
+    music: settle(music, {}),
+    nasa: settle(nasa, null),
+    tvShows: settle(tvShows, []),
+    books: settle(books, []),
+    games: settle(games, []),
+    weather: settle(weather, null),
+    stocks: settle(stocks, null),
+    photos: settle(photos, []),
+    wayback: settle(wayback, null),
+    earthquakes: settle(earthquakes, null),
+    science: settle(science, null),
+    currency: settle(currency, null),
+    spaceMissions: settle(spaceMissions, null),
     generatedAt: new Date().toISOString(),
   };
 

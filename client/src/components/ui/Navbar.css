@@ -10,9 +10,9 @@
 }
 
 .navbar.scrolled {
-  background: rgba(10, 6, 8, 0.92);
-  backdrop-filter: blur(12px);
-  border-bottom-color: rgba(196, 105, 138, 0.15);
+  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom: var(--border);
 }
 
 .navbar-inner {
@@ -65,4 +65,61 @@
   .navbar-tagline {
     display: none;
   }
+}
+
+.theme-toggle{
+
+    width:46px;
+    height:46px;
+
+    border-radius:50%;
+
+    border:var(--border);
+
+    background:var(--bg-card);
+
+    color:var(--text-primary);
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    cursor:pointer;
+
+    font-size:18px;
+
+    transition:.35s;
+
+    box-shadow:
+        0 6px 18px rgba(0,0,0,.08);
+}
+
+.theme-toggle:hover{
+
+    transform:rotate(180deg);
+
+    background:var(--accent);
+
+    color:white;
+}
+
+/* ===========================
+   LIGHT MODE NAVBAR
+=========================== */
+
+[data-theme="light"] .navbar.scrolled{
+
+    background:rgba(248,244,236,.88);
+
+    backdrop-filter:blur(14px);
+
+    border-bottom:1px solid rgba(200,106,155,.18);
+}
+
+[data-theme="light"] .logo-star{
+    color:#c86a9b;
+}
+
+[data-theme="light"] .navbar-tagline{
+    color:#74666d;
 }

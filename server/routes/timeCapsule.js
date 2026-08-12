@@ -22,8 +22,13 @@ router.get('/:date', async (req, res) => {
     return res.status(400).json({ error: 'Invalid date values' });
   }
 
+  // Optional coordinates for the weather section — falls back to New York
+  // inside getWeather() when these aren't provided.
+  const lat = req.query.lat ? parseFloat(req.query.lat) : undefined;
+  const lon = req.query.lon ? parseFloat(req.query.lon) : undefined;
+
   try {
-    const data = await getCapsuleData(date);
+    const data = await getCapsuleData(date, { lat, lon });
     res.json(data);
   } catch (err) {
     console.error('Capsule generation error:', err);

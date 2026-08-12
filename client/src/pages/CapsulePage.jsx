@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import Loader from '../components/ui/Loader';
 import MoonSection from '../components/sections/MoonSection';
@@ -9,25 +9,54 @@ import MoviesSection from '../components/sections/MoviesSection';
 import BirthdaysSection from '../components/sections/FamousBirthdaysSection';
 import HistorySection from '../components/sections/HistorySection';
 import PopulationSection from '../components/sections/PopulationSection';
+import NASASection from "../components/sections/NASASection";
 import TechSection from '../components/sections/TechEraSection';
+import WeatherSection from '../components/sections/WeatherSection';
+import StockSection from '../components/sections/StockSection';
+import EarthquakeSection from '../components/sections/EarthquakeSection';
+import CurrencySection from '../components/sections/CurrencySection';
 import ShareSection from '../components/sections/ShareSection';
-import { fetchCapsule } from '../utils/api';
+import { fetchCapsule, getBrowserCoords } from '../utils/api';
 import './CapsulePage.css';
+
+// Heavier, image-grid sections are lazy-loaded so the initial capsule paint
+// (masthead + main columns) isn't blocked by their bundle weight.
+const TVShowsSection = lazy(() => import('../components/sections/TVShowsSection'));
+const BooksSection = lazy(() => import('../components/sections/BooksSection'));
+const GamesSection = lazy(() => import('../components/sections/GamesSection'));
+const PhotosSection = lazy(() => import('../components/sections/PhotosSection'));
+const WaybackSection = lazy(() => import('../components/sections/WaybackSection'));
+const ScienceSection = lazy(() => import('../components/sections/ScienceSection'));
+const SpaceMissionsSection = lazy(() => import('../components/sections/SpaceMissionsSection'));
+
+// Matches the existing card language (no spinner, no layout shift surprises)
+// so a lazy chunk loading in doesn't look out of place.
+function SectionFallback() {
+  return <div className="card" style={{ minHeight: '120px', opacity: 0.4 }} />;
+}
 
 function CapsulePage() {
   const { date } = useParams();
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  // If we arrived here from the story flow, the capsule data was already
+  // fetched once there and handed off via router state — reuse it instead
+  // of calling the API again. Direct/shared links (no state) still fetch
+  // as before.
+  const preloadedData = location.state?.data || null;
+  const [data, setData] = useState(preloadedData);
+  const [loading, setLoading] = useState(!preloadedData);
   const [error, setError] = useState('');
   const capsuleRef = useRef(null);
 
   const name = sessionStorage.getItem('capsuleName') || '';
 
   useEffect(() => {
+    if (preloadedData) return;
     setLoading(true);
     setError('');
-    fetchCapsule(date)
+    getBrowserCoords()
+      .then(coords => fetchCapsule(date, coords))
       .then(d => { setData(d); setLoading(false); })
       .catch(err => {
         setError(err.response?.data?.error || 'Failed to load your time capsule. Please try again.');
@@ -106,6 +135,8 @@ function CapsulePage() {
           </div>
         </header>
 
+        <div className="scallop-divider masthead-scallop" aria-hidden="true"></div>
+
         {/* ── Main content ──────────────────────────────────────────── */}
         <div className="container capsule-grid">
 
@@ -122,12 +153,14 @@ function CapsulePage() {
             <PopulationSection population={data.population} year={data.date.year} />
             <TechSection tech={data.techEra} />
             {data.wikipedia?.holidays?.length > 0 && (
-              <div className="card holidays-card">
+              <div className="card-topper">
                 <div className="section-label">on this day</div>
-                <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Observances</h3>
-                {data.wikipedia.holidays.map((h, i) => (
-                  <p key={i} style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>★ {h.text}</p>
-                ))}
+                <div className="card holidays-card">
+                  <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Observances</h3>
+                  {data.wikipedia.holidays.map((h, i) => (
+                    <p key={i} style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>★ {h.text}</p>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -135,9 +168,42 @@ function CapsulePage() {
         </div>
 
         {/* ── Full width sections ───────────────────────────────────── */}
-        <div className="container">
+        <div className="container capsule-full-sections">
+
+          {/* Compact stat row — weather/markets/currency/quakes read better
+              as an even grid than crammed into the narrow sidebar. */}
+          {(data.weather || data.stocks || data.currency || data.earthquakes?.length > 0) && (
+            <div className="section-block">
+              <div className="section-label">at a glance</div>
+              <h2 className="section-title">Quick Facts for That Day</h2>
+              <div className="snapshot-grid">
+                {data.weather && <WeatherSection weather={data.weather} />}
+                {data.stocks && <StockSection stocks={data.stocks} />}
+                {data.currency && <CurrencySection currency={data.currency} />}
+                {data.earthquakes?.length > 0 && <EarthquakeSection earthquakes={data.earthquakes} />}
+              </div>
+            </div>
+          )}
+
+          {data.nasa && <NASASection nasa={data.nasa} />}
           {data.movies?.length > 0 && <MoviesSection movies={data.movies} year={data.date.year} />}
-          {data.famousBirthdays?.length > 0 && <BirthdaysSection birthdays={data.famousBirthdays} />}
+
+          <Suspense fallback={<SectionFallback />}>
+            {/* Games and Birthdays render unconditionally (not gated on
+                `.length > 0`) — each shows its own graceful "no data for
+                this date" message internally instead of disappearing, so
+                the section is always visually confirmable even when the
+                underlying API returned nothing for a given date. */}
+            <GamesSection games={data.games} year={data.date.year} />
+            <BirthdaysSection birthdays={data.famousBirthdays} />
+            {data.tvShows?.length > 0 && <TVShowsSection shows={data.tvShows} year={data.date.year} />}
+            {data.books?.length > 0 && <BooksSection books={data.books} year={data.date.year} />}
+            {data.photos?.length > 0 && <PhotosSection photos={data.photos} year={data.date.year} />}
+            {data.spaceMissions?.length > 0 && <SpaceMissionsSection missions={data.spaceMissions} />}
+            {data.science?.length > 0 && <ScienceSection papers={data.science} year={data.date.year} />}
+            {data.wayback?.length > 0 && <WaybackSection snapshots={data.wayback} />}
+          </Suspense>
+
           <ShareSection date={date} name={name} />
         </div>
 

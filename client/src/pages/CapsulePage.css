@@ -1,6 +1,5 @@
 .capsule-page {
   min-height: 100vh;
-  padding-bottom: 80px;
 }
 
 /* ── Error state ─────────────────────────────────────────────────── */
@@ -35,17 +34,17 @@
   position: relative;
   background: var(--bg-secondary);
   border-bottom: var(--border-strong);
-  padding: 120px 0 60px;
+  padding: 96px 0 56px;
   overflow: hidden;
-  margin-bottom: 48px;
+  margin-bottom: 0;
 }
 
 .masthead-noise {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 20% 50%, rgba(196, 105, 138, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(201, 168, 76, 0.06) 0%, transparent 40%);
+    radial-gradient(ellipse at 20% 50%, rgba(var(--accent-rgb), 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(var(--gold-rgb), 0.08) 0%, transparent 40%);
   pointer-events: none;
 }
 
@@ -188,12 +187,36 @@
   color: var(--gold);
 }
 
+/* Pulled up by half its own height so it straddles the masthead's bottom
+   edge (top half over the masthead, bottom half over the grid section
+   below) instead of sitting entirely below it with a gap. Uses a negative
+   margin rather than absolute positioning because .capsule-masthead needs
+   `overflow: hidden` to clip its own giant decorative year number —
+   this sibling isn't a descendant of the masthead, so it's unaffected.
+   Needs its own `position: relative` + z-index too: .capsule-masthead is
+   a positioned element (position: relative), and positioned elements
+   always paint above static ones regardless of DOM order — without this,
+   the masthead's own background was painting over the top half of the
+   circles it now overlaps, leaving only half-moons visible. */
+.masthead-scallop {
+  position: relative;
+  z-index: 2;
+  margin-top: -9px;
+}
+
 /* ── Two-column layout ───────────────────────────────────────────── */
-.capsule-grid {
+/* Selector combines both classes (.container.capsule-grid) — the element
+   renders as <div className="container capsule-grid">, and .container's
+   own `margin: 0 auto` shorthand has the same specificity as a bare
+   `.capsule-grid` rule, so whichever stylesheet happened to load second
+   was silently winning the margin-top tie. Matching both classes bumps
+   specificity so this rule always wins regardless of CSS load order. */
+.container.capsule-grid {
   display: grid;
-  grid-template-columns: 1fr 360px;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
   gap: 32px;
   align-items: start;
+  margin-top: 96px;
 }
 
 .capsule-col-main {
@@ -205,13 +228,57 @@
 .capsule-col-side {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  position: sticky;
-  top: 80px;
+  gap: 24px;
 }
 
 .holidays-card {
   padding: 20px;
+}
+
+/* ── Full-width section rhythm ───────────────────────────────────────── */
+/* Suspense doesn't render its own DOM node, so lazy sections inside it
+   become direct children here too — one gap value keeps every full-width
+   section evenly spaced regardless of what's inside it. */
+/* Same .container-class-collision fix as .capsule-grid above — element is
+   <div className="container capsule-full-sections">. */
+.container.capsule-full-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  margin-top: 80px;
+}
+
+/* Weather / Stocks / Currency / Earthquakes as one even row instead of
+   stacked in the narrow sidebar. auto-fit (not auto-fill) collapses any
+   grid tracks that have no card in them, so whichever of the four actually
+   render always stretch to cover the full row — no dead trailing column
+   when e.g. Stocks is missing for a date. */
+.snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+
+/* Smaller heading for this row specifically — "The Skies That Day" /
+   "Markets That Day" / "Earth Events" otherwise wrap inconsistently at
+   the default heading size (some fit on one line, some don't). A shared
+   cap-size keeps the labels reading as one family. The actual equal-
+   height guarantee for the white boxes below comes from `align-items:
+   stretch` above plus letting each card-topper/card fill its grid row. */
+.snapshot-grid .card-topper > .section-label {
+  font-size: 18px;
+  gap: 6px;
+  line-height: 1.2;
+  min-height: 26px;
+}
+
+.snapshot-grid .card-topper {
+  height: 100%;
+}
+
+.snapshot-grid .card-topper > .card {
+  flex: 1;
 }
 
 @media (max-width: 960px) {
@@ -223,11 +290,24 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
   }
+  .snapshot-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 600px) {
   .capsule-col-side {
     grid-template-columns: 1fr;
+  }
+  .snapshot-grid {
+    grid-template-columns: 1fr;
+  }
+  .container.capsule-grid {
+    margin-top: 48px;
+  }
+  .container.capsule-full-sections {
+    gap: 56px;
+    margin-top: 56px;
   }
   .masthead-date-line {
     gap: 4px;
