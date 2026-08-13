@@ -1,7 +1,3 @@
-Yes — **add a GitHub README section** to the report, preferably after the deployment section or as an appendix. It strengthens the report because it shows you understand how to document a project professionally.
-
-You can also create the actual `README.md` in your GitHub repository. Based only on the project details in your report, use this:
-
 # Born On This Day
 
 A full-stack web application built using the MERN stack that allows users to enter a date and discover historical information associated with that day.
