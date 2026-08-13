@@ -1,4 +1,4 @@
-# Born On This Day
+# 🌟Born On This Day🌟
 
 A full-stack web application built using the MERN stack that allows users to enter a date and discover historical information associated with that day.
 
