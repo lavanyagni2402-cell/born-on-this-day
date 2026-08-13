@@ -20,27 +20,31 @@ export async function loadSharedCapsule(shareId) {
   return res.data;
 }
 
-
-export function getBrowserCoords() {
-  return new Promise((resolve, reject) => {
+// Get the user's browser location for location-based sections
+export async function getBrowserCoords() {
+  return new Promise((resolve) => {
     if (!navigator.geolocation) {
-      reject(new Error('Geolocation is not supported by this browser.'));
+      resolve(null);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      position => {
+      (position) => {
         resolve({
-          lat: position.coords.latitude,
-          lon: position.coords.longitude
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
         });
       },
-      error => {
-        reject(error);
+      () => {
+        resolve(null);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 5000,
+        maximumAge: 300000,
       }
     );
   });
 }
-
 
 export default api;
